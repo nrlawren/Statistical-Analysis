@@ -1,0 +1,102 @@
+---
+title: "ST308 HW4"
+author: "Nash Lawrence"
+date: "11/21/2022"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(moments)
+```
+
+
+## 1.) Create a for loop to find the value of 10 factorial
+
+```{r}
+values <- 1
+for (index in 1:10){
+  values = values * index
+}
+paste("The factorial of 10 is:", values)
+```
+
+
+## Write a function that finds the factorial of a given number. Set default value to 10. Use an if statement to check if value of interest is greater than 100, if so stop the function and return a message saying the value is too large. If not, compute.
+
+
+```{r}
+facFunc <- function(val = 10){
+  if (val >= 100){
+    return("The input is too large.")
+  }
+  factor <- 1
+  for (index in 1:val){
+    if (val >= 100){
+      break
+    }
+    else{
+      factor = factor * index
+    }
+  }
+  finalFac <- paste("The factorial of", val, "is:", factor)
+  return(finalFac)
+  
+}
+facFunc()
+facFunc(8)
+```
+
+
+## 3.) Create a function 'convert_cm_to_in' that converts centimeters to inches. Determine how many inches a 25cm object is. 
+
+```{r}
+convertCM_toIN <- function(centimeter = 25){
+  inches = centimeter * 0.39370079
+  conValue <- paste("A", centimeter, "cm object is", inches, "inches.")
+  return(conValue)
+}
+convertCM_toIN()
+```
+
+```{r}
+facVec <- 0:100
+convertCM_toIN(facVec)
+```
+
+
+## Add an addition input that rounds the result to two decimal places by default
+
+```{r}
+convertCM_toIN <- function(centimeter = 25){
+  inches = centimeter * 0.39370079
+  conValue <- paste("A", centimeter, "cm object is", round(inches, 2), "inches.")
+  return(conValue)
+}
+facVec <- 0:100
+convertCM_toIN(facVec)
+```
+
+
+
+## 5.) Create a function 'count_my_change' that adds up the total amount of money you input. 5 arguments: dollar, quarter, dime, nickel, penny. Default of all arguments set to zero. Calculate total by multiplying each value by its dollar value (Ex- 0.25 * quarters). Create a string saying "Your total is $amount" with the total, and put it inside a return statement.
+
+
+```{r}
+count_myChange <- function(dollar = 0, quarter = 0, dimes = 0, nickels = 0, pennies = 0){
+  amount <- dollar + (0.25 * quarter) + (0.10 * dimes) + (0.05 * nickels) + (0.01 * pennies)
+  total <- paste("Your total is $", amount)
+  return(total)
+}
+count_myChange()
+count_myChange(5, 3, 2, 1, 4)
+```
+
+
+
+
+
+
