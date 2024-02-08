@@ -1,0 +1,200 @@
+---
+title: "Mini-Project 1"
+author: "Nash Lawrence"
+date: "10/4/2022"
+output:
+  html_document:
+    df_print: paged
+---
+
+This data set is about cars and their features.
+
+Variable Description:
+
+1.) reviews_count: Number of reviews on the car
+2.) fuel_type: Type of fuel that the car uses (Petrol = 0, Diesel = 1, Other = 2)
+3.) no_cylinder: number of cylinders contained in the car (0 for electrical cars)
+4.) seating_capacity: number of people that can fit in the car
+5.) transmission_type: type of transmission the car uses (Automatic = 0, Manual = 1, Electric = 2)
+6.) body_type: body shape of the car (SUV = 0, Sedan = 1, Other = 2)
+7.) max_power_bhp: maximum horsepower of the car
+
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+
+
+***1.) Load the data set and keep the 7 variables you want***
+
+```{r}
+url <- "CARS_2.csv"
+carData <- read_csv(url)
+carData <- carData %>% select(reviews_count, fuel_type, no_cylinder, seating_capacity, transmission_type, body_type, max_power_bhp)
+carData
+```
+
+
+***2.) Convert the categorical variables to factors. Apply labels to the values of the variables***
+
+```{r}
+carData$fuel_type <- factor(carData$fuel_type, levels = c(0,1,2), labels = c("Petrol", "Diesel", "Other"))
+carData$transmission_type <- factor(carData$transmission_type, levels = c(0,1,2), labels = c("Automatic", "Manual", "Electric"))
+carData$body_type <- factor(carData$body_type, levels = c(0,1,2), labels = c("SUV", "Sedan", "Other"))
+carData
+```
+
+
+***3.) Create two new "dummy" variables (0/1) from one continuous and one categorical variable***
+
+```{r}
+carData$autoCars <- ifelse(carData$transmission_type == "Automatic", 1, 0)
+carData$over_fourSeats <- ifelse(carData$seating_capacity > 4, 1, 0)
+carData$autoCars <- factor(carData$autoCars, levels = c(1,0), labels = c("Auto Trans", "Not Auto"))
+carData$over_fourSeats <- factor(carData$over_fourSeats, levels = c(1,0), labels = c("More than 4", "4 or Less"))
+carData
+```
+
+***4.) Table of Frequencies***
+
+***a.) Find the cumulative frequency for all of your categorical variables (now totaling 5)***
+
+```{r}
+cbind(Freq = table(carData$fuel_type), Cum=cumsum(table(carData$fuel_type)))
+cbind(Freq = table(carData$transmission_type), Cum=cumsum(table(carData$transmission_type)))
+cbind(Freq = table(carData$body_type), Cum=cumsum(table(carData$body_type)))
+cbind(Freq = table(carData$autoCars), Cum=cumsum(table(carData$autoCars)))
+cbind(Freq = table(carData$over_fourSeats), Cum=cumsum(table(carData$over_fourSeats)))
+```
+
+***b.) Find the relative frequency (%) of each response category for your 5 variables***
+
+```{r}
+tblFuel <- table(carData$fuel_type)
+propFuel <- round(prop.table(tblFuel), 3)*100
+cbind(Freq = tblFuel, Perc = propFuel)
+
+tblTrans <- table(carData$transmission_type)
+propTrans <- round(prop.table(tblTrans), 3)*100
+cbind(Freq = tblTrans, Perc = propTrans)
+
+tblBody <- table(carData$body_type)
+propBody <- round(prop.table(tblBody), 3)*100
+cbind(Freq = tblBody, Perc = propBody)
+
+tblDum1 <- table(carData$autoCars)
+propDum1 <- round(prop.table(tblDum1), 3)*100
+cbind(Freq = tblDum1, Perc = propDum1)
+
+tblDum2 <- table(carData$over_fourSeats)
+propDum2 <- round(prop.table(tblDum2), 3)*100
+cbind(Freq = tblDum2, Perc = propDum2)
+```
+
+
+***5.) Central Tendency and Variation***
+
+***a.) Find the mean, mode, and median of each of your 4 continuous variables***
+
+```{r}
+modeFunct <- function(x) {                      
+  unique_x <- unique(x)
+  tabulate_x <- tabulate(match(x, unique_x))
+  unique_x[tabulate_x == max(tabulate_x)]
+}
+```
+
+```{r}
+modeFunct(carData$reviews_count)
+median(carData$reviews_count)
+mean(carData$reviews_count)
+```
+
+```{r}
+modeFunct(carData$no_cylinder)
+median(carData$no_cylinder)
+mean(carData$no_cylinder)
+```
+
+```{r}
+modeFunct(carData$seating_capacity)
+median(carData$seating_capacity, na.rm = TRUE)
+mean(carData$seating_capacity, na.rm = TRUE)
+```
+
+```{r}
+modeFunct(carData$max_power_bhp)
+median(carData$max_power_bhp)
+mean(carData$max_power_bhp)
+```
+
+
+***b.)	Find the range, IQR, and SD for each of your 4 continuous variables***
+
+```{r}
+max(carData$reviews_count) - min(carData$reviews_count)
+IQR(carData$reviews_count)
+sd(carData$reviews_count)
+```
+
+```{r}
+max(carData$no_cylinder) - min(carData$no_cylinder)
+IQR(carData$no_cylinder)
+sd(carData$no_cylinder)
+```
+
+```{r}
+max(carData$seating_capacity, na.rm = TRUE) - min(carData$seating_capacity, na.rm = TRUE)
+IQR(carData$seating_capacity, na.rm = TRUE)
+sd(carData$seating_capacity, na.rm = TRUE)
+```
+
+```{r}
+max(carData$max_power_bhp) - min(carData$max_power_bhp)
+IQR(carData$max_power_bhp)
+sd(carData$max_power_bhp)
+```
+
+
+***6.) Graphs***
+
+
+***a.) Make a bar chart for a categorical variable. Include title, x/y labels, and a legend. Save it as PDF***
+
+```{r}
+fuelBar <- barplot(table(carData$fuel_type), main = "Number of Cars by Fuel Type", xlab = "Frequency", ylab = "Fuel Type", col = c("red", "dark green", "blue"))
+legend("topright", legend = c("Petrol", "Diesel", "Other"), fill = c("red", "dark green", "blue"))
+fuelBar
+```
+
+```{r}
+pdf("rplot.pdf", width = 1350, height = 1350)
+```
+
+
+
+***b.)	Make a grouped box plot using a categorical and a continuous variable. Include title, x/y labels, legend. Save it as JPeg***
+
+```{r}
+transHorseBox <- boxplot(carData$max_power_bhp ~ carData$transmission_type, main = "Transmission Type vs Maximum Horsepower", xlab = "Type of Transmission", ylab = "Maximum Horsepower", col = c("red", "green", "purple"))
+legend("top", legend = c("Automatic", "Manual", "Electric"), fill = c("red", "green", "purple"))
+transHorseBox
+```
+
+```{r}
+jpeg("rplot.jpg", width = 1350, height = 1350)
+```
+
+
+```{r}
+myList <- list(data.frame(small = 1:10), data.frame(large = 11:20))
+for(i in 1:2) {
+  print (myList[1])
+}
+```
+
+
+

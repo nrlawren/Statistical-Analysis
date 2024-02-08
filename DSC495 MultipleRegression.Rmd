@@ -1,0 +1,111 @@
+---
+title: "Multivariate Regression"
+date: "11/16/2022"
+output: html_notebook
+---
+
+
+```{r}
+library(Hmisc)
+library(corrplot)
+library(pastecs)
+library(car)
+```
+
+```{r}
+url <- "RStudio/GSS2016.csv"
+GSS2016 <- read_csv(url)
+head(GSS2016)
+```
+
+
+## Recoding the variables for education, maternal education, paternal education, hours of tv watched/day, and # of siblings, hours on the world wide web/week.
+
+
+```{r}
+GSS2016$educ[GSS2016$educ==98]=NA
+GSS2016$educ[GSS2016$educ==99]=NA
+GSS2016$maeduc[GSS2016$maeduc==97]=NA
+GSS2016$maeduc[GSS2016$maeduc==98]=NA
+GSS2016$maeduc[GSS2016$maeduc==99]=NA
+GSS2016$paeduc[GSS2016$paeduc==97]=NA
+GSS2016$paeduc[GSS2016$paeduc==98]=NA
+GSS2016$paeduc[GSS2016$paeduc==99]=NA
+GSS2016$tvhours[GSS2016$tvhours=='-1']=NA
+GSS2016$tvhours[GSS2016$tvhours==98]=NA
+GSS2016$sibs[GSS2016$sibs==98]=NA
+GSS2016$sibs[GSS2016$sibs==99]=NA
+GSS2016$wwwhr[GSS2016$wwwhr=='-1']=NA
+GSS2016$wwwhr[GSS2016$wwwhr==998]=NA
+GSS2016$wwwhr[GSS2016$wwwhr==999]=NA
+```
+
+
+## Compute new variable by adding together the years of education from the mother and the father
+
+```{r}
+GSS2016$mpeduc <- (GSS2016$maeduc + GSS2016$paeduc)
+table(GSS2016$mpeduc)
+```
+
+## Generate correlation matrix
+
+```{r}
+cm2 <- GSS2016[, c("educ","mpeduc", "tvhours", "sibs", "wwwhr")] 
+rcorr(as.matrix(cm2))
+```
+
+## Run Multiple Regression to see if any of the variables are associated with Education level
+
+```{r}
+reg2 <- lm(educ ~ mpeduc + tvhours + sibs + wwwhr, data = cm2)
+reg2
+```
+
+```{r}
+summary(reg2)
+```
+
+## Add some interaction objects to the linear model
+
+```{r}
+reg3 <- lm(formula = educ ~ mpeduc + tvhours + sibs + (mpeduc * tvhours) + (mpeduc * sibs) + (tvhours * sibs), data = cm2)
+reg3
+```
+
+```{r}
+summary(reg3)
+```
+
+## Produce a confidence interval for the coefficients of the Mulitple Linear Regression model
+
+```{r}
+confint(reg3)
+```
+
+
+## Call for the residuals
+
+```{r}
+resid(reg3)
+```
+
+## Make a histogram of the residuals to check for Normal Distribution
+
+```{r}
+hist(resid(reg3), col = "cornflowerblue")
+```
+
+Appears to be a Normal Distribution
+
+
+## Check the Variance Inflation Factors (VIF) of the regression model without the interaction terms
+
+```{r}
+vif(reg2)
+```
+Values all close to 1, indication no issues of multicollinearity.
+
+
+
+

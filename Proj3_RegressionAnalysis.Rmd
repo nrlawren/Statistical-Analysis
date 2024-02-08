@@ -1,0 +1,287 @@
+---
+title: "Mini-Project 3: Regression Analysis"
+author: "Nash Lawrence"
+date: "11/28/2022"
+output: html_notebook
+---
+
+This data set is about cars and their features.
+
+Variable Description:
+
+1.) reviews_count: Number of reviews on the car
+2.) fuel_type: Type of fuel that the car uses (Petrol = 0, Diesel = 1, Other = 2)
+3.) no_cylinder: number of cylinders contained in the car (0 for electrical cars)
+4.) seating_capacity: number of people that can fit in the car
+5.) transmission_type: type of transmission the car uses (Automatic = 0, Manual = 1, Electric = 2)
+6.) body_type: body shape of the car (SUV = 0, Sedan = 1, Other = 2)
+7.) max_power_bhp: maximum horsepower of the car
+
+
+## Load packages
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(Hmisc)
+library(corrplot)
+library(pastecs)
+library(car)
+```
+
+
+## Read in the data set, convert categorical variables to factors, and select the variables to be used.
+
+```{r}
+url <- "RStudio/CARS_2.csv"
+carData <- read_csv(url)
+carData$fuel_type <- factor(carData$fuel_type, levels = c(0,1,2), labels = c("Petrol", "Diesel", "Other"))
+carData$transmission_type <- factor(carData$transmission_type, levels = c(0,1,2), labels = c("Automatic", "Manual", "Electric"))
+carData$body_type <- factor(carData$body_type, levels = c(0,1,2), labels = c("SUV", "Sedan", "Other"))
+carData <- carData %>% dplyr::select(reviews_count, fuel_type, no_cylinder, seating_capacity, transmission_type, body_type, max_power_bhp)
+head(carData)
+```
+
+
+## Create two dummy variables (0/1) based on an existing variable and convert them to a factor variable with labels
+
+```{r}
+carData$autoCars <- ifelse(carData$transmission_type == "Automatic", 1, 0)
+carData$over_fourSeats <- ifelse(carData$seating_capacity > 4, 1, 0)
+carData$autoCars <- factor(carData$autoCars, levels = c(1,0), labels = c("Auto Trans", "Not Auto"))
+carData$over_fourSeats <- factor(carData$over_fourSeats, levels = c(1,0), labels = c("More than 4", "4 or Less"))
+head(carData)
+```
+
+
+
+## Create and save a table of frequencies for the factor variables. Calculate relative and cumulative percentages as well.
+
+```{r}
+fuelTypeFac <- table(carData$fuel_type)
+transTypeFac <- table(carData$transmission_type)
+bodyTypeFac <- table(carData$body_type)
+autoCarFac <- table(carData$autoCars)
+overFourFac <- table(carData$over_fourSeats)
+fuelTypeFac
+transTypeFac
+bodyTypeFac
+autoCarFac
+overFourFac
+```
+
+## Calculate cumulative frequencies
+
+```{r}
+cbind(Freq = table(carData$fuel_type), Cum=cumsum(table(carData$fuel_type)))
+cbind(Freq = table(carData$transmission_type), Cum=cumsum(table(carData$transmission_type)))
+cbind(Freq = table(carData$body_type), Cum=cumsum(table(carData$body_type)))
+cbind(Freq = table(carData$autoCars), Cum=cumsum(table(carData$autoCars)))
+cbind(Freq = table(carData$over_fourSeats), Cum=cumsum(table(carData$over_fourSeats)))
+```
+
+## Calculate the relative frequency (%) for each response category
+
+```{r}
+tblFuel <- table(carData$fuel_type)
+propFuel <- round(prop.table(tblFuel), 3)*100
+cbind(Freq = tblFuel, Perc = propFuel)
+
+tblTrans <- table(carData$transmission_type)
+propTrans <- round(prop.table(tblTrans), 3)*100
+cbind(Freq = tblTrans, Perc = propTrans)
+
+tblBody <- table(carData$body_type)
+propBody <- round(prop.table(tblBody), 3)*100
+cbind(Freq = tblBody, Perc = propBody)
+
+tblDum1 <- table(carData$autoCars)
+propDum1 <- round(prop.table(tblDum1), 3)*100
+cbind(Freq = tblDum1, Perc = propDum1)
+
+tblDum2 <- table(carData$over_fourSeats)
+propDum2 <- round(prop.table(tblDum2), 3)*100
+cbind(Freq = tblDum2, Perc = propDum2)
+```
+
+
+## Find the mean, minimum, maximum, range, and standard deviation for all three continuous variables
+
+
+***Number of Reviews***
+
+```{r}
+carData$reviews_count[carData$reviews_count > 1000]=1000
+paste("Mean:", round(mean(carData$reviews_count),3))
+paste("Minimum:", min(carData$reviews_count))
+paste("Maximum:", max(carData$reviews_count))
+paste("Range:", max(carData$reviews_count) - min(carData$reviews_count))
+paste("Standard Deviation:", round(sd(carData$reviews_count), 3))
+```
+
+***Maximum Horsepower***
+
+```{r}
+paste("Mean:", round(mean(carData$max_power_bhp),3))
+paste("Minimum:", min(carData$max_power_bhp))
+paste("Maximum:", max(carData$max_power_bhp))
+paste("Range:", max(carData$max_power_bhp) - min(carData$max_power_bhp))
+paste("Standard Deviation:", round(sd(carData$max_power_bhp), 3))
+```
+
+***Number of Cylinders***
+
+```{r}
+paste("Mean:", round(mean(carData$no_cylinder),3))
+paste("Minimum:", min(carData$no_cylinder))
+paste("Maximum:", max(carData$no_cylinder))
+paste("Range:", max(carData$no_cylinder) - min(carData$no_cylinder))
+paste("Standard Deviation:", round(sd(carData$no_cylinder), 3))
+```
+
+
+Dependent Variable (DV) for this study = Maximum Horsepower
+
+
+## Produce a histogram for each continuous variable. If you think there are outliers, explain why.
+
+
+***Number of Reviews***
+
+```{r}
+numRevHist <- hist(carData$reviews_count, col = "red", main = "Histogram of Reviews per Car", xlab = "Number of Reviews", breaks = seq(0, 1000, by = 100))
+```
+
+There are plenty of outliers for number of reviews. I can tell this because almost all the values lie in the first bin (0-100 reviews), and with an average number of reviews at 99.47 and a high standard deviation (200.8), this indicates plenty of extreme values.
+
+
+***Maximum Horsepower***
+
+```{r}
+maxHorHist <- hist(carData$max_power_bhp, col = "dark green", main = "Histogram of Maximum Horsepower per Car", xlab = "Maximum Horsepower")
+```
+
+
+***Number of Cylinders***
+
+```{r}
+numCylHist <- hist(carData$no_cylinder, col = "yellow", main = "Histogram for Cylinders per Car", xlab = "Number of Cylinders", breaks = seq(0, 12, by = 2))
+```
+
+
+
+## Create a scatter plot for each continuous variable vs the dependent variable (Maximum Horsepower). Add a regression line and comment if there is a linear relationship
+
+
+***Number of Cylinders vs Maximum Horsepower***
+
+```{r}
+plot(carData$no_cylinder, carData$max_power_bhp, main = "Number of Cylinders vs Maximum Horsepower", xlab = "Number of Cylinders", ylab = "Maximum Horsepower", pch = 16, col = "blue")
+abline(lm(carData$max_power_bhp ~ carData$no_cylinder), col = "red", lwd = 2)
+```
+
+```{r}
+lm(carData$max_power_bhp ~ carData$no_cylinder)
+```
+
+The regression line indicates a linear relationship, but the residual values have a large variance. Therefore, it is hard to predict the Maximum Horsepower based only off the Number of Cylinders in a car.
+
+
+
+***Number of Reviews vs Maximum Horsepower***
+
+```{r}
+plot(carData$reviews_count, carData$max_power_bhp, main = "Number of Car Reviews vs Maximum Horsepower", xlab = "Number of Reviews", ylab = "Maximum Horsepower", pch = 16, col = "blue")
+abline(lm(carData$max_power_bhp ~ carData$reviews_count), col = "red", lwd = 2)
+```
+
+```{r}
+lm(carData$max_power_bhp ~ carData$reviews_count)
+```
+
+I do not see much of a linear relationship based on the formula and regression line on the plot. With most of the review counts being less than 100, all the outliers make it tough to predict the Maximum Horsepower based off just the number of reviews. 
+
+
+
+## Run a correlation matrix
+
+
+```{r}
+corMatrix <- carData[, c("max_power_bhp", "reviews_count", "no_cylinder")]
+matVals <- rcorr(as.matrix(corMatrix))
+matVals
+```
+
+## Extract the correlation coefficients and p-values. Explain which variables are statistically significantly correlated.
+
+```{r}
+matVals$r
+```
+
+```{r}
+matVals$p
+```
+
+
+-The relationship between the number of cylinders and maximum horsepower is positive and strong, indicated by the r-value of 0.687. The relationship between the number of reviews and maximum horsepower is negative and weak, indicated by the r-value of -0.373. The relationship between the number of reviews and number of cylinders is negative and very weak, indicated by the r-value of -0.179.
+
+-With a p-value of 0.0104 between the number of cylinders and number of reviews, the two variables are statistically significantly correlated because the p-value is less than the significance level of 0.05. The other two relationships between variables (number of reviews and maximum horsepower, number of cylinders and maximum horsepower) are also statistically significantly correlated because the p-value is equal to zero, which is less than any significance level. 
+
+
+## What are the 3 highest correlations between any of the two variables? Do you see multicollinearity issues between the continuous variables.
+
+-The highest correlation between two variables is number of cylinders and maximum horsepower, with a r-value of 0.687.
+
+-There is a potential sign of multicollinearity between the number of cylinders and maximum horsepower, as the absolute value of the r-value is 0.687, which is close to 0.7.
+
+
+
+## Create a correlation matrix plot (set type = 'lower') to visually depict the correlations
+
+```{r}
+corrplot(matVals$r, type = "lower", order = "hclust", tl.col = "black", p.mat = matVals$P, sig.level = 0.05, insig = "blank")
+```
+
+
+
+## Run a multiple linear regression model with 5 Independent variables.
+
+
+```{r}
+multReg <- lm(max_power_bhp ~ no_cylinder + reviews_count + body_type + fuel_type + transmission_type, data = carData)
+summary(multReg)
+```
+
+## Interpret the results and do a comprehensive write-up
+
+-Equation with body type = Sedan, fuel type = Diesel, transmission type = Manual:
+Maximum Horsepower = -29.96 + 65.67(no_cylinder) - 0.13(reviews_count) - 37.11 - 27.72 -77.34
+
+-A multiple linear regression tested the association between a car's maximum horsepower and the number of cylinders on the car, controlling for the number of reviews on the car, the car's body type, the car's fuel type, and the car's transmission type. The results point to a significant regression equation (F(8, 194) = 60.73, p < 0.001), with an R-squared value of 0.7146. With this R-squared value, we know we can roughly predict 71.46% of the variation in the maximum horsepower of a car.
+-Some variables that are not statistically significant include body_typeSedan, body_typeOther, fuel_typeDiesel, and fuel_typeOther. I came to this conclusion because all of those p-values are greater than the significance level of 0.05, indicating those variables are not statistically significant. The rest of the variables are statistically significant, with p-values less than 0.01.
+
+
+
+
+## Create a histogram of the residuals for the regression model
+
+
+```{r}
+resid(multReg)
+```
+
+```{r}
+hist(resid(multReg), col = "blue")
+```
+
+The histogram is not a perfectly normal distribution, with a little bit of a skew to the right. However, the curve seems bell shaped enough to call it a normal distribution.
+
+
+
+
+
+
+
+
+

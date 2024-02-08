@@ -1,0 +1,264 @@
+---
+title: "Univariate Analysis"
+date: "09/28/2022"
+output: html_notebook
+---
+
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+
+```{r}
+GSS2016 <- read_csv("GSS2016.csv")
+head(GSS2016)
+```
+
+***Central Tendancy and Variability***
+
+```{r}
+mean(GSS2016$age) 
+GSS2016$age[GSS2016$age==99]=NA
+mean(GSS2016$age, na.rm = TRUE) 
+median(GSS2016$age, na.rm=TRUE)
+```
+
+```{r}
+range(GSS2016$age, na.rm=TRUE)
+max(GSS2016$age, na.rm = TRUE) - min(GSS2016$age, na.rm = TRUE)
+quantile(GSS2016$age, na.rm=TRUE)
+IQR(GSS2016$age, na.rm=TRUE)
+```
+
+```{r}
+var(GSS2016$age, na.rm=TRUE)
+sd(GSS2016$age, na.rm=TRUE)
+## scale(GSS2016, center = TRUE, scale = TRUE)
+## scale(GSS2016$age, center=FALSE, scale=TRUE)
+```
+
+```{r}
+(72 - (mean(GSS2016$age, na.rm=TRUE)))/(sd(GSS2016$age, na.rm=TRUE))
+```
+
+```{r}
+sample_n(GSS2016, 5, replace = FALSE)
+```
+
+```{r}
+subset(GSS2016, sex==1)
+```
+
+
+***Univariate Analysis***
+
+***Bar plot***
+
+```{r}
+values <- c(0.4, 0.75, 0.2, 0.6, 0.5)
+barplot(values)
+```
+
+```{r}
+group <- LETTERS[1:5]
+barplot(values, names.arg = group)
+```
+
+***Stacked bar plot with legend***
+
+```{r}
+data <- as.matrix(data.frame(A = c(0.2, 0.4), B = c(0.3, 0.1), C = c(0.7, 0.1), D = c(0.1, 0.2), E = c(0.3, 0.3)))
+rownames(data) <- c("Group 1", "Group 2")
+barplot(data, col = c("#1b98e0", "#353436"))
+legend("topright", legend = c("Group 1", "Group 2"), fill = c("#1b98e0", "#353436"))
+```
+
+***Grouped bar chart with legend***
+
+```{r}
+barplot(data, col = c("#1b98e0", "#353436"), beside = TRUE)
+legend("topright", legend = c("Group 1", "Group 2"), fill = c("#1b98e0", "#353436"))
+```
+
+***Box plots***
+
+```{r}
+set.seed(8642)                                               
+x <- rnorm(1000)
+boxplot(x)
+```
+
+***Multiple box plots on one graph***
+
+```{r}
+y <- runif(1000)                                             
+z <- rpois(1000, 3)
+data <- data.frame(values = c(x, y, z), group = c(rep("x", 1000), rep("y", 1000), rep("z", 1000)))
+head(data)
+```
+
+```{r}
+boxplot(data$values ~ data$group, data, main = "My Boxplots", xlab = "My Boxplot Groups", ylab = "The Values of My Boxplots", col = c("red", "dark green", "purple"))
+```
+
+
+
+***Horizontal Box plot***
+
+```{r}
+boxplot(values ~ group, data, horizontal = TRUE, main = "My Boxplots", xlab = "My Boxplot Groups", ylab = "The Values of My Boxplots", col = c("red", "dark green", "purple"))
+```
+
+***Add Space Between Boxplots of Different Groups***
+
+```{r}
+data2 <- data                                                
+data2$group <- c(rep("x1", 500), rep("x2", 500),rep("y1", 500), rep("y2", 500),rep("z1", 500), rep("z2", 500))
+boxplot(values ~ group, data2, col = c("blue", "pink"),at = c(1, 2, 5, 6, 9, 10))
+```
+
+***Histograms***
+
+***Non-Uniform Width***
+
+```{r}
+hist(rivers, main = "Length of Rivers in North America", col = "#1b98e0", breaks = c(0, 250, 300, 400, 500, 750, 1000, 2500, 5000))
+```
+
+***Manual number of breaks***
+
+```{r}
+hist(rivers, main = "Length of Rivers in North America", col = "#1b98e0", breaks = 50)
+```
+
+***Manual Axis limits***
+
+```{r}
+hist(rivers, col = "#1b98e0", xlim = c(0, 5000), ylim = c(0, 120))
+```
+
+***Overlaid Density Line***
+
+```{r}
+hist(rivers, col = "#1b98e0", ylim = c(0, 0.002), prob = TRUE)
+lines(density(rivers), col = "red")
+```
+
+
+***Values on top of the bars***
+
+```{r}
+hist_values <- hist(rivers, ylim = c(0, 100))                                
+text(hist_values$mids, hist_values$counts, labels = hist_values$counts, adj = c(0.5, - 0.5))
+```
+
+
+***Scatter plots***
+
+***Fitting Line***
+
+```{r}
+set.seed(42424)                                   
+x <- rnorm(500)
+y <- x + rnorm(500)
+plot(x, y, main = "This is my Scatterplot", xlab = "My X-Values", ylab = "My Y-Values")
+abline(lm(y ~ x), col = "red")
+```
+
+***Smooth fitting line with the lowess function. Also modify color and point symbols***
+
+```{r}
+plot(x, y, main = "This is my Scatterplot", xlab = "My X-Values", ylab = "My Y-Values", pch = 16, col = "#1b98e0")                                       
+lines(lowess(x, y), col = "green")
+```
+
+
+***Scatter plot with multiple groups***
+
+```{r}
+group <- rbinom(500, 1, 0.3) + 1
+group_pch <- group                                
+group_pch[group_pch == 1] <- 16
+group_pch[group_pch == 2] <- 8
+group_col <- group                                
+group_col[group_col == 1] <- "red"
+group_col[group_col == 2] <- "green"
+plot(x, y, main = "This is my Scatterplot", xlab = "My X-Values", ylab = "My Y-Values", pch = group_pch, col = group_col)
+legend("topleft", legend = c("Group 1", "Group 2"), col = c("red", "green"), pch = c(16, 8))
+```
+
+***Matrix of scatter plots***
+
+```{r}
+z <- runif(500)                                   
+data <- data.frame(x, y, z)                       
+pairs(data)
+```
+
+
+***Line plots***
+
+```{r}
+x <- 1:10                                            
+y1 <- c(3, 1, 5, 2, 3, 8, 4, 7, 6, 9)
+plot(x, y1, type = "l", main = "This is my Line Plot", xlab = "My X-Values", ylab = "My Y-Values", col = "blue", lwd = 4)
+```
+
+***Add points to line graph***
+
+```{r}
+plot(x, y1, type = "b", main = "This is my Line Plot", xlab = "My X-Values", ylab = "My Y-Values", col = "blue", lwd = 4)
+```
+
+
+***Plot multiple lines to one graph***
+
+```{r}
+y2 <- c(5, 1, 4, 6, 2, 3, 7, 8, 2, 8)                 
+y3 <- c(3, 3, 3, 3, 4, 4, 5, 5, 7, 7)
+plot(x, y1, main = "Line Plot", xlab = "My X-Values", ylab = "My Y-Values", type = "l")                                 
+lines(x, y2, type = "l", col = "red")                 
+lines(x, y3, type = "l", col = "green")
+legend("topleft", legend = c("Line y1", "Line y2", "Line y3"), col = c("black", "red", "green"), lty = 1)
+```
+
+
+***Different point symbol for each line***
+
+```{r}
+plot(x, y1, main = "Line Plot", xlab = "X-Values", ylab = "Y-Values", type = "b", pch = 16)                      
+lines(x, y2, type = "b", col = "red", pch = 15)
+lines(x, y3, type = "b", col = "green", pch = 8)
+legend("topleft", legend = c("Line y1", "Line y2", "Line y3"), col = c("black", "red", "green"), pch = c(16, 15, 8))
+```
+
+
+***Pie Graphs***
+
+```{r}
+df <- data.frame(group = c("Male", "Female", "Child"), value = c(25, 25, 50))
+pie(df$value, labels = df$group, radius = 1, col = c("#999999", "#E69F00", "#56B4E9"))
+```
+
+***3-D Pie Charts***
+
+```{r}
+library(plotrix)
+```
+
+
+```{r}
+plotrix::pie3D(df$value, labels = df$group, radius = 1.5, col = c("#999999", "#E69F00", "#56B4E9"))
+```
+
+***Explode the Pie Chart***
+
+```{r}
+plotrix::pie3D(df$value, labels = df$group, radius = 1.5, col = c("#999999", "#E69F00", "#56B4E9"), explode = 0.1)
+```
+
+
+

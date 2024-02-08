@@ -1,0 +1,161 @@
+---
+title: "Mini-Project 2"
+author: "Nash Lawrence"
+date: "11/1/2022"
+output: html_notebook
+---
+
+This data set is about cars and their features.
+
+Variable Description:
+
+1.) reviews_count: Number of reviews on the car
+2.) fuel_type: Type of fuel that the car uses (Petrol = 0, Diesel = 1, Other = 2)
+3.) no_cylinder: number of cylinders contained in the car (0 for electrical cars)
+4.) seating_capacity: number of people that can fit in the car
+5.) transmission_type: type of transmission the car uses (Automatic = 0, Manual = 1, Electric = 2)
+6.) body_type: body shape of the car (SUV = 0, Sedan = 1, Other = 2)
+7.) max_power_bhp: maximum horsepower of the car
+
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+url <- "CARS_2.csv"
+carData <- read_csv(url)
+carData$fuel_type <- factor(carData$fuel_type, levels = c(0,1,2), labels = c("Petrol", "Diesel", "Other"))
+carData$transmission_type <- factor(carData$transmission_type, levels = c(0,1,2), labels = c("Automatic", "Manual", "Electric"))
+carData$body_type <- factor(carData$body_type, levels = c(0,1,2), labels = c("SUV", "Sedan", "Other"))
+carData <- carData %>% dplyr::select(reviews_count, fuel_type, no_cylinder, seating_capacity, transmission_type, body_type, max_power_bhp)
+carData
+```
+
+***Dummy variables***
+
+```{r}
+carData$autoCars <- ifelse(carData$transmission_type == "Automatic", 1, 0)
+carData$over_fourSeats <- ifelse(carData$seating_capacity > 4, 1, 0)
+carData$autoCars <- factor(carData$autoCars, levels = c(1,0), labels = c("Auto Trans", "Not Auto"))
+carData$over_fourSeats <- factor(carData$over_fourSeats, levels = c(1,0), labels = c("More than 4", "4 or Less"))
+carData
+```
+
+
+***You have three continuous variables and two dummy variables. Create two box plots for each continuous variable against the two dummy variables. Explain if you see any difference between the mean of groups for each continuous variables based on the box plots***
+
+```{r}
+cylinderAuto <- boxplot(carData$no_cylinder ~ carData$autoCars, main = "Number of Cylinders for Automatic vs Non-automatic Transmission", xlab = "Automatic Trasmission or Not", ylab = "Number of Cylinders", col = c("red", "green"))
+```
+## Cars with an Automatic transmission generally have a higher amount of Cylinders on average
+
+
+```{r}
+cylinderSeatCap <- boxplot(carData$no_cylinder ~ carData$over_fourSeats, main = "Number of Cylinders for Car Seating Capacities Over 4 vs 4 or Less", xlab = "Four or More Seats", ylab = "Number of Cylinders", col = c("green", "blue"))
+```
+## Cars with a seating capacity of 4 or less will have more cylinders than almost any car with a seating capacity of 5 or higher
+
+
+```{r}
+reviewCountAuto <- boxplot(carData$reviews_count ~ carData$autoCars, main = "Number of Car Reviews for Automatic vs Non-automatic", xlab = "Automatic Transmission or Not", ylab = "Number of Reviews", col = c("purple", "red"))
+```
+## You cannot make a clear interpretation that a car having an Automatic transmission or not impacts how many reviews it has
+
+
+```{r}
+reviewCountCap <- boxplot(carData$reviews_count ~ carData$over_fourSeats, main = "Number of Car Reviews for Seating Capacities Over 4 vs Less than 4", xlab = "Four or More Seats", ylab = "Number of Reviews", col = c("blue", "orange"))
+```
+## Cars with a seating capacity of 5 or more seats generally have more reviews but not by much, they also have more outliers with higher reviews
+
+
+```{r}
+horsePowerAuto <- boxplot(carData$max_power_bhp ~ carData$autoCars, main = "Maximum Horsepower for Automatic Transmission vs Non-automatic", xlab = "Automatic Transmission or Not", ylab = "Maximum Horsepower", col = c("green", "orange"))
+```
+## Cars with an Automatic transmission generally have a higher maximum horsepower than those without an automatic transmission
+
+
+```{r}
+horsePowerCap <- boxplot(carData$max_power_bhp ~ carData$over_fourSeats, main = "Maximum Horsepower for Seating Capacities Over 4 vs Less than 4", xlab = "Four or More Seats", ylab = "Maximum Horsepower", col = c("blue", "yellow"))
+```
+## Cars with a seating capacity of 4 or less generally have a much higher maximum horsepower compared to cars with 5 or more seats
+
+
+***Run 6 t-tests where you look for systematic (statistically significant) differences between the groups of your two dummy variables and your 3 continuous variables. Interpret the difference in means for each t-test and the statistical significance of each difference***
+
+```{r}
+t.test(carData$no_cylinder ~ carData$autoCars)
+```
+## This is a two-tailed test. When comparing the means of the number of cylinders on cars with an automatic transmission vs cars without an automatic transmission, we reject the null hypothesis. The p-value 8.706e-12 is less than the alpha 0.05, making the difference statistically significant. We are 95% sure the difference in means is between 2.12 and 3.52. The true difference in means of number of cylinders on cars with an automatic transmission vs cars without an automatic transmission is not equal to zero.
+
+
+
+```{r}
+t.test(carData$no_cylinder ~ carData$over_fourSeats, alternative = "less")
+```
+## This is a left-tailed test. When comparing the means of the number of cylinders on cars with more than 4 seats vs cars with 4 or less seats, we reject the null hypothesis. The p-value 1.429e-06 is less than the alpha 0.05, making the difference statistically significant. We are 95% sure the difference in means is -1.97 or less. The true difference in means for the number of cylinders on cars with more than 4 seats vs cars with 4 or less seats is less than zero.
+
+
+
+```{r}
+t.test(carData$reviews_count ~ carData$autoCars, conf.level = .99)
+```
+## This is two-tailed test. When comparing the means of the number of reviews on cars with automatic transmission vs cars without automatic transmission, we fail to reject the null hypothesis. The p-value 0.6815 is greater than the alpha 0.01, making the difference not statistically significant. We are 99% sure the difference in means is between -138.64 and 101.14. The true difference in means for the number of reviews on cars with automatic transmission vs cars without automatic transmission is equal to zero.
+
+
+
+```{r}
+t.test(carData$reviews_count ~ carData$over_fourSeats, alternative = "greater", conf.level = 0.9)
+```
+## This is a right-tailed test. When comparing the means of number of reviews on cars with more than 4 seats vs cars with 4 or less seats, we reject the null hypothesis. The p-value 3.619e-06 is less than the alpha 0.05, making the difference statistically significant. We are 90% sure the difference in means is 92.31 or more. The true difference in means for the number of reviews on cars with more than 4 seats vs cars with 4 or less seats is greater than zero.
+
+
+
+
+```{r}
+t.test(carData$max_power_bhp ~ carData$autoCars, alternative = "less")
+```
+## This is a left-tailed test. When comparing the means of the maximum horsepower on cars with automatic transmission vs cars without automatic transmission, we fail to reject the null hypothesis. The p-value 1 is greater than the alpha 0.05, making the difference not statistically significant. We are 95% sure the difference in means is 174.91 or less. The true difference in means for the maximum horsepower on cars with automatic transmission vs cars without automatic transmission is greater than zero.
+
+
+
+```{r}
+t.test(carData$max_power_bhp ~ carData$over_fourSeats, conf.level = 0.99)
+```
+## This is a two-tailed test. When comparing the means of the maximum horsepower on cars with more than 4 seats vs cars with 4 or less seats, we reject the null hypothesis. The p-value 4.757e-07 is less than the alpha 0.01, making the difference statistically significant. We are 99% sure the difference in means falls between -332.24 and -123.49. The true difference in means for the maximum horsepower on cars with more than 4 seats vs cars with 4 or less seats is not equal to zero.
+
+
+
+
+***Run correlations for each of your continuous variables. Interpret the correlation coefficients***
+
+```{r}
+cor.test(carData$no_cylinder, carData$reviews_count, method = "pearson", use = "pairwise.complete.obs", exact = FALSE)
+```
+## The correlation coefficients show a weak and negative correlation of -0.132 between the number of cylinders and number of reviews on a car. The p-value 0.06085 is greater than the alpha 0.05, giving us evidence that the correlation is not statistically significant.
+
+
+
+```{r}
+cor.test(carData$no_cylinder, carData$max_power_bhp, method = "pearson", use = "pairwise.complete.obs", exact = FALSE)
+```
+## The correlation coefficients show a postive and moderately strong correlation of 0.687 between the number of cylinders and the maximum horsepower on cars. The p-value 2.2e-16 is less than the alpha 0.05, giving us evidence that the correlation is statistically significant.
+
+
+
+```{r}
+cor.test(carData$max_power_bhp, carData$reviews_count, method = "pearson", use = "pairwise.complete.obs", exact = FALSE)
+```
+## The correlation coefficients show a negative and moderately weak correlation of -0.28 between the maximum horsepower and the number of reviews on cars. The p-value 5.067e-05 is less than the alpha 0.05, giving us evidence that the correlation is statistically significant.
+
+
+
+
+
+
+
+
+
+
